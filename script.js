@@ -1,5 +1,5 @@
 /* =========================================
-   Nebula Compressor v3.1
+   Nebula Compressor v3.2
    Premium Image Optimization Logic
    ========================================= */
 
@@ -151,18 +151,38 @@ function resetUI() {
 }
 
 /* =========================================
-   Clipboard Engine (Secure Context)
+   Clipboard Engine (Secure Context & Robust)
    ========================================= */
 
 async function copyToClipboard(blob) {
     if (!blob) return;
 
     const originalContent = copyBtn.innerHTML;
-    copyBtn.innerHTML = "Copying...";
+    copyBtn.innerHTML = `
+        <svg class="spinner-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+        </svg>
+        Copying...
+    `;
 
     try {
-        const item = new ClipboardItem({ [blob.type]: blob });
-        await navigator.clipboard.write([item]);
+        // Attempt 1: Direct Copy (Preferred)
+        try {
+            // Sanitize type (Fixes common JPEG clipboard issues)
+            let type = blob.type;
+            if (type === 'image/jpg') type = 'image/jpeg';
+
+            const item = new ClipboardItem({ [type]: blob });
+            await navigator.clipboard.write([item]);
+        } catch (jpegError) {
+            console.warn("JPEG Copy failed (" + jpegError.message + "), switching to PNG fallback...");
+
+            // Attempt 2: PNG Fallback (Universal Compatibility)
+            // Some browsers refuse JPEG on clipboard, but accept PNG.
+            const pngBlob = await convertToPng(blob);
+            const item = new ClipboardItem({ 'image/png': pngBlob });
+            await navigator.clipboard.write([item]);
+        }
 
         // Success Feedback
         copyBtn.innerHTML = `
@@ -183,12 +203,27 @@ async function copyToClipboard(blob) {
         }, 2000);
 
     } catch (err) {
-        console.error("Copy failed:", err);
-        copyBtn.innerText = "Error";
-        setTimeout(() => {
-            copyBtn.innerHTML = originalContent;
-        }, 2000);
+        console.error("Critical Copy Error:", err);
+        alert("Copy failed: " + err.message + "\n\nPlease stick to Drag & Drop if this persists.");
+        copyBtn.innerHTML = originalContent;
     }
+}
+
+// Helper: Convert any blob to PNG for clipboard compatibility
+async function convertToPng(blob) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const img = await loadImage(URL.createObjectURL(blob));
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(resolve, 'image/png');
+        } catch (e) {
+            reject(e);
+        }
+    });
 }
 
 /* =========================================
