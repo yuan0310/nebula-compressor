@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Compressor | Intelligent Image Optimization</title>
+    <link rel="stylesheet" href="style.css?v=3.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="app-glass-container">
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                <h1>Nebula Compressor</h1>
+            </div>
+            <p class="tagline">Intelligent compression for the modern web.</p>
+        </header>
+
+        <main>
+            <!-- Upload State -->
+            <div class="upload-zone" id="drop-zone">
+                <div class="upload-content">
+                    <div class="upload-icon-wrapper">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                        </svg>
+                        <div class="icon-pulse"></div>
+                    </div>
+                    <h2>Drop your image here</h2>
+                    <p>Supports PNG, JPG significantly optimized for HackMD</p>
+                    <button class="btn-text">or <span class="highlight">browse files</span></button>
+                    <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg" hidden>
+                </div>
+            </div>
+
+            <!-- Processing State -->
+            <div class="state-processing hidden" id="processing-state">
+                <div class="loader-ring">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <p>Optimizing pixels...</p>
+            </div>
+
+            <!-- Result State -->
+            <div class="state-result hidden" id="result-area">
+                <div class="comparison-stage">
+                    <!-- Original -->
+                    <div class="stat-card original">
+                        <div class="card-header">
+                            <span class="label">Original</span>
+                            <span class="size" id="original-size">--</span>
+                        </div>
+                        <div class="img-viewer">
+                            <img id="original-preview" alt="Original">
+                        </div>
+                        <div class="card-footer">
+                            <span class="dims" id="original-dims">-- px</span>
+                        </div>
+                    </div>
+
+                    <!-- Indicator -->
+                    <div class="flow-indicator">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 5l7 7-7 7M5 12h14" />
+                        </svg>
+                    </div>
+
+                    <!-- Optimized -->
+                    <div class="stat-card optimized">
+                        <div class="card-header">
+                            <span class="label success">Optimized</span>
+                            <span class="size" id="compressed-size">--</span>
+                        </div>
+                        <div class="img-viewer">
+                            <img id="compressed-preview" alt="Compressed">
+                        </div>
+                        <div class="card-footer">
+                            <span class="dims" id="compressed-dims">-- px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button id="download-btn" class="btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                        </svg>
+                        Download Optimized
+                    </button>
+                    <button id="reset-btn" class="btn-text-only">
+                        Process Another
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <span class="status-indicator"></span> Ready for HackMD &bull; v3.0 Premium
+        </footer>
+    </div>
+
+    <script src="script.js?v=3.0"></script>
+</body>
+
+</html>
