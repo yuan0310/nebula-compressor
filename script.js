@@ -1,5 +1,5 @@
 /* =========================================
-   Nebula Compressor v3.0
+   Nebula Compressor v3.1
    Premium Image Optimization Logic
    ========================================= */
 
@@ -19,6 +19,7 @@ const compressedDimsParams = document.getElementById('compressed-dims');
 
 // Actions
 const downloadBtn = document.getElementById('download-btn');
+const copyBtn = document.getElementById('copy-btn');
 const resetBtn = document.getElementById('reset-btn');
 
 // Constants
@@ -29,7 +30,7 @@ let currentCompressedBlob = null;
 let currentExtension = 'jpg';
 
 /* =========================================
-   Event Listeners (Drag & Drop + Input)
+   Event Listeners
    ========================================= */
 
 // Drag Effects
@@ -68,6 +69,7 @@ document.addEventListener('paste', (e) => {
 
 // Actions
 resetBtn.addEventListener('click', resetUI);
+copyBtn.addEventListener('click', () => copyToClipboard(currentCompressedBlob));
 
 /* =========================================
    Core Processing Logic
@@ -116,7 +118,6 @@ async function processFile(file) {
         };
 
         // UI Transition: Processing -> Result
-        // Small artificial delay to show off the animation (feels more premium)
         setTimeout(() => {
             processingState.classList.add('hidden');
             resultArea.classList.remove('hidden');
@@ -135,6 +136,59 @@ function resetUI() {
     dropZone.classList.remove('hidden');
     fileInput.value = '';
     currentCompressedBlob = null;
+
+    // Reset Copy Button
+    copyBtn.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 4v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7.242a2 2 0 0 0-.602-1.43L16.083 2.57A2 2 0 0 0 14.685 2H10a2 2 0 0 0-2 2z"/>
+            <path d="M16 18v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/>
+        </svg>
+        Copy
+    `;
+    copyBtn.style.background = "";
+    copyBtn.style.color = "";
+    copyBtn.style.borderColor = "";
+}
+
+/* =========================================
+   Clipboard Engine (Secure Context)
+   ========================================= */
+
+async function copyToClipboard(blob) {
+    if (!blob) return;
+
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.innerHTML = "Copying...";
+
+    try {
+        const item = new ClipboardItem({ [blob.type]: blob });
+        await navigator.clipboard.write([item]);
+
+        // Success Feedback
+        copyBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            Copied!
+        `;
+        copyBtn.style.background = "rgba(16, 185, 129, 0.2)";
+        copyBtn.style.color = "#34d399";
+        copyBtn.style.borderColor = "#34d399";
+
+        setTimeout(() => {
+            copyBtn.innerHTML = originalContent;
+            copyBtn.style.background = "";
+            copyBtn.style.color = "";
+            copyBtn.style.borderColor = "";
+        }, 2000);
+
+    } catch (err) {
+        console.error("Copy failed:", err);
+        copyBtn.innerText = "Error";
+        setTimeout(() => {
+            copyBtn.innerHTML = originalContent;
+        }, 2000);
+    }
 }
 
 /* =========================================
@@ -142,7 +196,6 @@ function resetUI() {
    ========================================= */
 
 async function smartCompress(img, type, originalSize, originalFile) {
-    // 0. Pass-through Check
     if (originalSize < MAX_SIZE_BYTES) {
         console.log("Image under 1MB. Returning original.");
         return originalFile;
@@ -151,14 +204,12 @@ async function smartCompress(img, type, originalSize, originalFile) {
     const width = img.width;
     const height = img.height;
 
-    // Helper: Render to Blob
     const getBlob = (mime, q, w, h) => new Promise(resolve => {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = w;
         tempCanvas.height = h;
         const ctx = tempCanvas.getContext('2d');
 
-        // Handle transparency for JPEG
         if (mime === 'image/jpeg') {
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, w, h);
@@ -170,13 +221,10 @@ async function smartCompress(img, type, originalSize, originalFile) {
         tempCanvas.toBlob(resolve, mime, q);
     });
 
-    // Strategy 1: Smart PNG Scaling (Preserve Transparency)
     if (type === 'image/png') {
         let minScale = 0.5;
         let maxScale = 0.99;
         let bestPNGBlob = null;
-
-        // Binary search for max dimensions that fit
         for (let i = 0; i < 6; i++) {
             let mid = (minScale + maxScale) / 2;
             let w = Math.floor(width * mid);
@@ -190,12 +238,9 @@ async function smartCompress(img, type, originalSize, originalFile) {
                 maxScale = mid;
             }
         }
-
         if (bestPNGBlob) return bestPNGBlob;
     }
 
-    // Strategy 2: High-Quality JPEG Binary Search
-    // First, convert to JPEG at 100% to see if just format change is enough
     let fullBlob = await getBlob('image/jpeg', 1.0, width, height);
     if (fullBlob.size < MAX_SIZE_BYTES) return fullBlob;
 
@@ -207,7 +252,7 @@ async function smartCompress(img, type, originalSize, originalFile) {
         let midQ = (minQ + maxQ) / 2;
         let blob = await getBlob('image/jpeg', midQ, width, height);
 
-        if (blob.size <= MAX_SIZE_BYTES * 0.99) { // Target 990KB
+        if (blob.size <= MAX_SIZE_BYTES * 0.99) {
             bestJPGBlob = blob;
             minQ = midQ;
         } else {
@@ -217,8 +262,6 @@ async function smartCompress(img, type, originalSize, originalFile) {
 
     if (bestJPGBlob) return bestJPGBlob;
 
-    // Strategy 3: Aggressive Resizing (Fallback)
-    // If quality reduction isn't enough, we must reduce dimensions
     let scale = 0.9;
     while (scale > 0.1) {
         let w = Math.floor(width * scale);
@@ -228,7 +271,6 @@ async function smartCompress(img, type, originalSize, originalFile) {
         scale -= 0.1;
     }
 
-    // Last Resort (Tiny Thumbnail)
     return await getBlob('image/jpeg', 0.5, Math.floor(width * 0.5), Math.floor(height * 0.5));
 }
 
