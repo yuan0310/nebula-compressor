@@ -23,8 +23,8 @@ const copyBtn = document.getElementById('copy-btn');
 const resetBtn = document.getElementById('reset-btn');
 
 // Constants
-const MAX_SIZE_MB = 1;
-const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+const MAX_SIZE_KB = 950;
+const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
 
 let currentCompressedBlob = null;
 let currentExtension = 'jpg';
@@ -232,7 +232,7 @@ async function convertToPng(blob) {
 
 async function smartCompress(img, type, originalSize, originalFile) {
     if (originalSize < MAX_SIZE_BYTES) {
-        console.log("Image under 1MB. Returning original.");
+        console.log("Image under 950KB. Returning original.");
         return originalFile;
     }
 
